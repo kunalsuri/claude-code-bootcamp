@@ -25,6 +25,7 @@ A hands-on workflow for coding with Claude Code. Built for first-timers.
 |---|---|---|
 | 📄 | [cheatsheet.md](cheatsheet.md) | One page of slash commands |
 | 🧩 | [template/CLAUDE.md](template/CLAUDE.md) | Copy into any project |
+| 🎮 | [docs/index.html](docs/index.html) | Interactive demo of both exercises |
 | 🐛 | [exercises/01-fix-a-bug](exercises/01-fix-a-bug/README.md) | Fix a bug, test first |
 | ✨ | [exercises/02-build-a-feature](exercises/02-build-a-feature/README.md) | Plan, build and review a feature |
 

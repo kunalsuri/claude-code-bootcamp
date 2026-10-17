@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Bootcamp Demo</title>
+<style>
+  :root { --bg:#fafaf8; --fg:#1f1f1c; --muted:#6b6b64; --card:#fff; --line:#dddcd5; --accent:#c4552d; --term:#1b1b19; --termfg:#e8e6df; --red:#e5594f; --green:#4fb36b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --fg:#ecebe5; --muted:#9a998f; --card:#201f1d; --line:#35342f; --term:#0e0e0d; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  p.sub { color:var(--muted); margin:0 0 20px; }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--fg); padding:8px 14px; border-radius:8px; }
+  button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .step-label { color:var(--accent); font-weight:600; font-size:.85rem; text-transform:uppercase; letter-spacing:.04em; }
+  .prompt { background:var(--bg); border-left:3px solid var(--accent); padding:8px 12px; margin:8px 0; font-family:ui-monospace,monospace; font-size:.9rem; white-space:pre-wrap; }
+  pre.term { background:var(--term); color:var(--termfg); padding:14px; border-radius:8px; overflow-x:auto; font:13px/1.5 ui-monospace,monospace; margin:8px 0 0; white-space:pre-wrap; }
+  .red { color:var(--red); } .green { color:var(--green); }
+  .nav { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .dots { color:var(--muted); font-size:.9rem; }
+  textarea { font:inherit; width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
+  .results { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .res { border:1px solid var(--line); border-radius:8px; padding:10px; text-align:center; }
+  .res b { display:block; font-size:1.8rem; }
+  .res small { color:var(--muted); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .chips button { font-size:.85rem; padding:4px 10px; }
+  @media (max-width:520px) { .results { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Claude Code Bootcamp: interactive demo</h1>
+  <p class="sub">Click through each exercise to see the workflow before you try it yourself. Nothing here runs Claude; the output is an illustrative example of what you'd type and see.</p>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="card">
+    <div class="step-label" id="label"></div>
+    <h2 id="title" style="margin:4px 0 8px;font-size:1.15rem"></h2>
+    <div id="body"></div>
+  </div>
+  <div class="nav">
+    <button id="back">Back</button>
+    <span class="dots" id="dots"></span>
+    <button id="next" class="on">Next</button>
+  </div>
+
+  <div class="card" id="tryit" style="margin-top:24px">
+    <div class="step-label">Try it yourself</div>
+    <h2 style="margin:4px 0 8px;font-size:1.15rem">word_count: buggy vs fixed</h2>
+    <textarea id="txt" rows="2" aria-label="Text to count">hello  world</textarea>
+    <div class="chips">
+      <button data-v="">empty string</button>
+      <button data-v="a  b">two spaces</button>
+      <button data-v="line one&#10;line two" data-nl="1">newline</button>
+      <button data-v="hello world">normal</button>
+    </div>
+    <div class="results">
+      <div class="res"><small>Buggy: <code>text.split(" ")</code></small><b id="bug"></b></div>
+      <div class="res"><small>Fixed: <code>text.split()</code></small><b id="fix"></b></div>
+    </div>
+    <p class="sub" style="margin:10px 0 0" id="verdict"></p>
+  </div>
+</main>
+
+<script>
+const E = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const prompt = (t) => `<div class="prompt">${E(t)}</div>`;
+const term = (t) => `<pre class="term">${t}</pre>`;
+
+const demos = {
+  "Exercise 1: Fix a bug": [
+    ["Setup", "Run the starting tests", "Everything passes, so the bug is hidden.",
+      term("$ python -m pytest -q\n<span class=\"green\">...  3 passed in 0.02s</span>")],
+    ["Setup", "Create the project rules", "In <code>claude</code>, type <code>/init</code>. Then add one rule so Claude follows the workflow.",
+      prompt("/init") + term("Created CLAUDE.md\n\n# Rules\n- Write a failing test before the code.")],
+    ["Test first", "Ask for failing tests only", "Tell Claude not to fix anything yet.",
+      prompt("Add failing tests for word_count edge cases (empty string, extra spaces, newlines). Don't fix the code yet.") +
+      term("Added 4 tests to test_textstats.py")],
+    ["Test first", "See red", "Failing tests prove the bug is real and that the tests catch it.",
+      term("$ python -m pytest -q\n<span class=\"red\">FAILED test_word_count_empty                   assert 1 == 0\nFAILED test_word_count_extra_spaces            assert 3 == 2\nFAILED test_word_count_leading_trailing_spaces assert 6 == 2\nFAILED test_word_count_newlines_and_tabs       assert 1 == 3</span>\n4 failed, 3 passed")],
+    ["Implement", "Fix it", "Now let Claude change the code. The cause: <code>split(\" \")</code> only splits on single spaces.",
+      prompt("Now fix word_count so the tests pass.") +
+      term("- return len(text.split(\" \"))\n+ return len(text.split())")],
+    ["Implement", "See green", "", term("$ python -m pytest -q\n<span class=\"green\">.......  7 passed in 0.02s</span>")],
+    ["Review", "Polish and review", "Run both before you push. Read every finding.",
+      prompt("/simplify") + prompt("/code-review") + term("Findings: add whitespace-only tests, parametrize the edge cases,\nshare one split helper between the two functions.")],
+  ],
+  "Exercise 2: Build a feature": [
+    ["Design", "Enter plan mode", "Press Shift+Tab until you see plan mode. Claude proposes; you approve.",
+      prompt("Plan a `done <number>` command for todo.py. Cover bad input like 0, 99 or 'abc'.") +
+      term("Plan:\n1. Add mark_done(number) in todo.py\n2. Reject non-numbers and out-of-range numbers with a clear message\n3. Add a `done` subcommand\n4. Tests for each case\n\nApprove? [y/n]")],
+    ["Test first", "Write failing tests", "Tests come from the plan.",
+      prompt("Write failing tests for the plan first.") +
+      term("$ python -m pytest -q\n<span class=\"red\">FAILED test_mark_done  AttributeError: no attribute 'mark_done'\nFAILED test_done_out_of_range\nFAILED test_done_not_a_number</span>\n3 failed, 2 passed")],
+    ["Implement", "Make them pass", "",
+      prompt("Implement it so the tests pass.") + term("$ python -m pytest -q\n<span class=\"green\">.....  5 passed</span>")],
+    ["Verify", "Run it for real", "Tests are not the same as using it. Use <code>/run</code> or the terminal.",
+      term("$ python todo.py add \"buy milk\"\n$ python todo.py done 1\n$ python todo.py list\n1. [x] buy milk\n\n$ python todo.py done 99\n<span class=\"red\">error: no task number 99</span>")],
+    ["Verify", "Review", "Two checks: bugs and unsafe input.",
+      prompt("/code-review") + prompt("/security-review") +
+      term("code-review: 1 finding\n  todo.py:17  a corrupt todo.json crashes with a traceback\nsecurity-review: 0 findings")],
+  ],
+};
+
+const names = Object.keys(demos);
+let cur = names[0], i = 0;
+const $ = (id) => document.getElementById(id);
+
+function render() {
+  const steps = demos[cur], s = steps[i];
+  $("label").textContent = s[0] + " (step " + (i+1) + " of " + steps.length + ")";
+  $("title").textContent = s[1];
+  $("body").innerHTML = (s[2] ? "<p style='margin:0 0 4px'>" + s[2] + "</p>" : "") + s[3];
+  $("dots").textContent = "●".repeat(i+1) + "○".repeat(steps.length-i-1);
+  $("back").disabled = i === 0;
+  $("next").disabled = i === steps.length-1;
+  $("tabs").innerHTML = "";
+  names.forEach((n) => {
+    const b = document.createElement("button");
+    b.textContent = n; b.className = n === cur ? "on" : "";
+    b.onclick = () => { cur = n; i = 0; render(); };
+    $("tabs").appendChild(b);
+  });
+}
+$("back").onclick = () => { i--; render(); };
+$("next").onclick = () => { i++; render(); };
+
+const buggy = (t) => t.split(" ").length;
+const fixed = (t) => t.split(/\s+/).filter(Boolean).length;
+function count() {
+  const t = $("txt").value, b = buggy(t), f = fixed(t);
+  $("bug").textContent = b; $("fix").textContent = f;
+  $("verdict").textContent = b === f ? "Same answer here, so this input hides the bug." : "Different answers: the buggy version is wrong.";
+}
+$("txt").oninput = count;
+document.querySelectorAll(".chips button").forEach((b) => b.onclick = () => {
+  $("txt").value = b.dataset.nl ? "line one\nline two" : b.dataset.v; count();
+});
+
+render(); count();
+</script>
+</body>
+</html>
